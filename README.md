@@ -7,6 +7,16 @@ paper_repair code, and ablation scripts. Local experiment outputs, large
 downloaded data, caches, and model/checkpoint artifacts are not part of the
 uploadable source package.
 
+## Framework
+
+<p align="center">
+  <img src="assets/framework.png" alt="CCR-Judge Framework" width="850">
+</p>
+
+<p align="center">
+  <a href="assets/framework.pdf">View framework figure as PDF</a>
+</p>
+
 ## Main Entry
 
 ```bash
