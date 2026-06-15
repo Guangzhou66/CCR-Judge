@@ -9,8 +9,10 @@ uploadable source package.
 
 ## Framework
 
+## Framework
+
 <p align="center">
-  <img src="assets/framework.png" alt="CCR-Judge Framework" width="850">
+  <img src="assets/framework_cropped.png" alt="CCR-Judge Framework" width="900">
 </p>
 
 <p align="center">
