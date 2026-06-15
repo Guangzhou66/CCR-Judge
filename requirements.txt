@@ -1,0 +1,15 @@
+async-timeout
+astunparse
+datasets
+dotenv
+loguru
+numpy
+openai
+pandas
+pyarrow
+requests
+tenacity
+tiktoken
+torch
+tqdm
+transformers

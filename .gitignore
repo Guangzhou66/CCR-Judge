@@ -1,0 +1,45 @@
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+.env
+*.env
+
+# System / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and outputs
+*.log
+logs/
+outputs/
+runs/
+wandb/
+results/
+checkpoints/
+models/
+
+# Large model files
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+
+# Data
+data/raw/
+datasets/
