@@ -1,12 +1,14 @@
-# CCR_JUDGE
+# CCR-Judge
 
-Clean CCR/Ori-protocol and paper_repair experiment package.
+## Cross-Candidate Context Repair for Decision-Preserving LLM Judging under KV-Cache Reuse
 
-This repository keeps the runnable CCR/Ori protocol code, fixed-slate
-paper_repair code, and ablation scripts. Local experiment outputs, large
-downloaded data, caches, and model/checkpoint artifacts are not part of the
-uploadable source package.
+CCR-Judge is a training-free inference-time repair framework for final-stage LLM judging under KV-cache reuse.
 
+The project studies judge-side KV-cache reuse as a **decision-preservation** problem. Dense-prefill judging is treated as the behavioral reference, and the goal is to preserve its candidate-level selection behavior after introducing KV-cache reuse.
+
+CCR-Judge builds a compact cross-candidate comparative context before final reuse-side judging while keeping the original candidate texts, candidate order, judge backbone, and KV-reuse mechanism unchanged.
+
+---
 
 ## Framework
 
@@ -18,127 +20,192 @@ uploadable source package.
   <a href="assets/framework.pdf">View framework figure as PDF</a>
 </p>
 
-## Main Entry
+## Method
 
-```bash
-cd CCR_JUDGE
-./run_qwen_ori_protocol_progressive.sh \
-  --datasets "mmlu humaneval gsm8k" \
-  --gpu 0
+CCR-Judge performs:
+
+1. candidate-view extraction;
+2. answer grouping;
+3. group-support summarization;
+4. structural-anchor selection;
+5. risk-state estimation;
+6. comparative-context construction;
+7. CCR-conditioned final judging.
+
+The comparative context contains answer-group support, a structural anchor, major competing groups, and a risk-aware evidence shortlist.
+
+The shortlist controls which evidence is described in greater detail but never removes candidates from the final candidate set.
+
+If the CCR-conditioned output cannot be mapped to a valid candidate ID, the implementation can fall back to the cached base-reuse selection.
+
+---
+
+## Metric
+
+The primary decision-preservation metric is **Judge Consistency Rate (JCR)**:
+
+\[
+\mathrm{JCR}
+=
+\frac{
+\sum_n \eta_n \mathbf{1}[\hat{s}_n=s_n^{\mathrm{dense}}]
+}{
+\sum_n \eta_n
+}.
+\]
+
+JCR measures whether the evaluated inference path selects the same canonical candidate as the dense-prefill judge.
+
+It complements task accuracy, since two methods may achieve similar correctness while selecting different candidate solutions.
+
+---
+
+## Repository Structure
+
+```text
+CCR-Judge/
+├── KVCOMM/            # Multi-agent and KV-cache reuse implementation
+├── experiments/       # Experiment and evaluation scripts
+├── dataset_adapters/  # Dataset interfaces
+├── paper_repair/      # Fixed-slate judge-side evaluation
+├── ablation_study/    # CCR ablations
+├── assets/            # Framework figures
+├── requirements.txt
+└── README.md
 ```
 
-Small bounded diagnostic run:
+Representative scripts:
 
-```bash
-cd CCR_JUDGE
-./run_qwen_ori_protocol_progressive.sh \
-  --datasets "mmlu" \
-  --gpu 0 \
-  --limit-questions 3
+```text
+experiments/evaluate_mmlu_ori_protocol.py
+experiments/evaluate_paper_repair_judge.py
+experiments/build_mmlu_paper_repair_candidates.py
+experiments/build_gsm8k_paper_repair_candidates.py
+experiments/build_humaneval_paper_repair_candidates.py
+experiments/benchmark_TTFT.py
 ```
 
-This command still performs true model inference on the selected examples. Do
-not use the default launcher command as a smoke test unless `--limit-questions`
-is set to a small value and the selected split or index file is authorized for
-the current phase.
+---
 
-## Included Paths
-
-- `KVCOMM/`
-- `experiments/`
-- `dataset_adapters/`
-- `paper_repair/`
-- `ablation_study/`
-- `my_datasets/`
-- Ori protocol launchers:
-  - `run_qwen_ori_protocol_progressive.sh`
-  - `run_all_mmlu_ori_protocol.sh`
-  - `run_all_humaneval.sh`
-  - `run_all_gsm8k.sh`
-  - `run_all_openbookqa_ori_protocol.sh`
-  - `run_all_online_ori_protocol_extension_formal.sh`
-- Paper/fixed-slate launchers:
-  - `run_all_paper_repair_formal.sh`
-  - `run_qwen_paper_repair_ac_full.sh`
-  - `run_qwen_paper_repair_fixed.sh`
-  - `run_paper_repair_judge_only_split_methods.sh`
-  - `run_submission_table_metrics.sh`
-
-## Data Notes
-
-MMLU data is intentionally not committed. The code keeps
-`my_datasets/MMLU/download.py`; the MMLU adapter calls the downloader when the
-dataset is needed.
-
-The generated/downloaded MMLU tree under `my_datasets/MMLU/data/` and the
-archive `my_datasets/MMLU/data.tar` are local-only artifacts and should not be
-checked in.
-
-HumanEval keeps the small local JSONL file under `my_datasets/humaneval/`.
-
-GSM8K and OpenBookQA runners expect a local dataset root. The repository-level
-defaults are `data/gsm8k` and `data/openbookqa`; override them with:
+## Installation
 
 ```bash
-./run_all_gsm8k.sh --dataset-root /path/to/gsm8k ...
-./run_all_openbookqa_ori_protocol.sh --dataset-root /path/to/openbookqa ...
+git clone https://github.com/Guangzhou66/CCR-Judge.git
+cd CCR-Judge
+pip install -r requirements.txt
 ```
 
-The runner scripts expose `--split`; several launchers default to `test` for
-paper reproduction, and `run_qwen_ori_protocol_progressive.sh` passes
-`--split test` for GSM8K. For development or pre-commit checks, use a small
-bounded run on an explicitly authorized split or index file, or run only static
-checks.
+A CUDA-capable PyTorch environment is recommended for local LLM inference.
 
-The small `my_datasets/gsm8k/gsm8k.jsonl` file is retained for legacy JSONL
-entry points. The current Ori and paper_repair GSM8K paths use parquet files
-under `data/gsm8k`.
+Model checkpoints are not included in this repository.
 
-## Runtime Notes
+---
 
-By default, scripts still point to the local environment and model paths used
-on the original machine:
+## Datasets
 
-- `/pychen/Anaconda3/envs/Judge`
-- `/pychen/Test/model/Qwen2.5-7B-Instruct`
+The experiments cover:
 
-Override them with `--env` and `--llm-name` when running elsewhere.
+- MMLU
+- GSM8K
+- HumanEval
+- OpenBookQA
+- OpenBookQA-Fact
 
-`requirements.txt` lists the main Python packages needed to import and run the
-code. It is intentionally not version-pinned; for exact reproduction, preserve
-the original Python/CUDA/PyTorch/Transformers environment metadata alongside any
-published experiment artifacts.
+Large benchmark files are not redistributed and should be obtained from their original sources.
 
-The previous sibling-directory dependency on `/pychen/Test/Judge/Ori` was
-removed for the core agent files; `AnalyzeAgent`, `FinalSelectBest`, and
-`OriProtocolFinalSelectBest` now load from this repository.
+Dataset paths may need to be configured according to the corresponding adapter or experiment script.
 
-## Output Layout
+---
 
-Runtime outputs are written below the selected `--result-root`, which defaults
-to a timestamped subdirectory of `result/`. Typical runs create logs,
-`benchmark_summary.json`, `main_table.md`, per-run `*_summary.json`, per-run
-`*_details.json`, and latency files. These outputs are intentionally ignored by
-Git and should be archived separately when needed for an experiment record.
+## Usage
 
-## Pre-commit Checks
-
-Safe static check:
+Check the available arguments before running an experiment:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python -m py_compile $(find KVCOMM experiments dataset_adapters paper_repair ablation_study my_datasets -name '*.py' -not -path '*/__pycache__/*' -not -path '*/MMLU/data/*')
+python experiments/evaluate_mmlu_ori_protocol.py --help
 ```
 
-Do not run full evaluation, test-set evaluation, training, retrieval reruns, or
-large model generation as part of a routine pre-commit check.
+The repository supports:
 
-## GitHub Hygiene
+- Dense Prefill
+- Naive Reuse
+- KVCOMM
+- CCR-Judge
+- fixed-slate judge evaluation
+- shuffled and non-shuffled candidate orders
+- component ablations
+- task accuracy
+- JCR
+- TTFT diagnostics
 
-Commit source code, launcher scripts, README, `.gitignore`, small immutable
-configuration files such as `experiments/mmlu_153_seed888_indices.json`, and
-the small bundled HumanEval/GSM8K JSONL files if those legacy entry points are
-needed.
+For full experiments, configure the required model checkpoint and dataset paths first.
 
-Do not commit local datasets, downloaded archives, `result/`, logs, caches,
-model weights, checkpoints, local environment files, API keys, tokens, or
-machine-specific paths embedded in private configs.
+---
+
+## Reproducibility
+
+For strict reproduction, record:
+
+```text
+Python version
+CUDA version
+PyTorch version
+Transformers version
+model checkpoint
+dataset version
+random seed
+candidate-order setting
+experiment command
+```
+
+The repository does not include:
+
+```text
+model checkpoints
+large downloaded datasets
+runtime caches
+generated experiment outputs
+private credentials
+```
+
+Some defaults may reflect the original experimental environment and should be adapted when running on another machine.
+
+---
+
+## Static Check
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python -m py_compile \
+$(find KVCOMM experiments dataset_adapters paper_repair ablation_study \
+-name '*.py' -not -path '*/__pycache__/*')
+```
+
+This checks Python syntax only and does not verify datasets, models, CUDA compatibility, or full numerical reproduction.
+
+---
+
+## Citation
+
+```bibtex
+@article{chen2026ccrjudge,
+  title  = {CCR-Judge: Cross-Candidate Context Repair for Decision-Preserving LLM Judging under KV-Cache Reuse},
+  author = {Chen, Peiyu and Chen, Xiaoyu and Fan, Lingyun and Zhao, Ruoxi and Zhao, Yaru and Li, Binyang},
+  year   = {2026}
+}
+```
+
+Please update the final venue and publication metadata after publication.
+
+---
+
+## Code Availability
+
+The implementation and experimental scripts associated with CCR-Judge are provided in this repository.
+
+Model checkpoints and benchmark datasets should be obtained from their original sources.
+
+---
+
+## Contact
+
+For questions regarding the implementation or experimental setup, please contact the authors using the information provided in the paper.
