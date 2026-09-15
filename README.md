@@ -16,10 +16,6 @@ CCR-Judge builds a compact cross-candidate comparative context before final reus
   <img src="assets/framework_cropped.png" alt="CCR-Judge Framework" width="900">
 </p>
 
-<p align="center">
-  <a href="assets/framework.pdf">View framework figure as PDF</a>
-</p>
-
 ## Method
 
 CCR-Judge performs:
