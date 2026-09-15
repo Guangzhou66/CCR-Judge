@@ -38,22 +38,11 @@ If the CCR-conditioned output cannot be mapped to a valid candidate ID, the impl
 
 ## Metric
 
-The primary decision-preservation metric is **Judge Consistency Rate (JCR)**:
+The primary decision-preservation metric is **Judge Consistency Rate (JCR)**, which measures the proportion of valid instances for which the evaluated inference path selects the same canonical candidate as the dense-prefill judge.
 
-\[\mathrm{JCR}=
-\frac{
-\sum_n \eta_n \mathbf{1}[\hat{s}_n=s_n^{\mathrm{dense}}]
-}{
-\sum_n \eta_n
-}.
-\]
-
-JCR measures whether the evaluated inference path selects the same canonical candidate as the dense-prefill judge.
-
-It complements task accuracy, since two methods may achieve similar correctness while selecting different candidate solutions.
+JCR complements task accuracy, since two methods may achieve similar correctness while selecting different candidate solutions.
 
 ---
-
 ## Repository Structure
 
 ```text
