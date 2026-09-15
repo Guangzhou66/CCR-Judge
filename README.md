@@ -40,9 +40,7 @@ If the CCR-conditioned output cannot be mapped to a valid candidate ID, the impl
 
 The primary decision-preservation metric is **Judge Consistency Rate (JCR)**:
 
-\[
-\mathrm{JCR}
-=
+\[\mathrm{JCR}=
 \frac{
 \sum_n \eta_n \mathbf{1}[\hat{s}_n=s_n^{\mathrm{dense}}]
 }{
