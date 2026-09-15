@@ -7,7 +7,6 @@ paper_repair code, and ablation scripts. Local experiment outputs, large
 downloaded data, caches, and model/checkpoint artifacts are not part of the
 uploadable source package.
 
-## Framework
 
 ## Framework
 
